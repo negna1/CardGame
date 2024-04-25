@@ -8,18 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var emojisCount = 4
-    var emojis = ["🥹","🙂","😍","😙", "🥺", "🤯" ,"😶‍🌫️" , "🥹","🙂","😍","😙", "🥺", "🤯" ,"😶‍🌫️"]
+    @State var emojisCount = 10
+    var emojis = ["🐨" , "🦁", "🙊", "🦋", "🇬🇪", "🐯", "🪀", "🍎", "🥬", "🖥️", "📸", "👀", "👩🏻‍🦳", "🙈"]
     
     var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], content: {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))],spacing: 0, content: {
             ForEach(0..<emojisCount, id: \.self){i in
                 CardView(emojy: emojis[i])
                     .aspectRatio(2/3, contentMode: .fit)
+                    .padding(3)
             }
         })
         .foregroundColor(.orange)
-        .padding()
+        .padding(3)
         Spacer()
         cardAdjusters
     }
@@ -56,6 +57,9 @@ struct CardView: View {
             let rectangle =  RoundedRectangle(cornerRadius: 10)
                 rectangle.stroke(lineWidth: 3)
                 Text(emojy)
+                .font(.system(size: 120))
+                .minimumScaleFactor(0.1)
+                .scaledToFit()
             rectangle.fill().opacity(isFaceUp ? 0 : 1)
         }
         .onTapGesture {
