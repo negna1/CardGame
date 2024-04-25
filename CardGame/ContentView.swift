@@ -8,18 +8,27 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var emojisCount = 4
-    var emojis = ["🥹","🙂","😍","😙", "🥺", "🤯" ,"😶‍🌫️" , "🥹","🙂","😍","😙", "🥺", "🤯" ,"😶‍🌫️"]
+    @ObservedObject var viewModel: EmojyMemoryGame = .init()
     
+    private func needToWhitePlace(_ card: MemorizeGame<String>.Card) -> Bool {
+        (card.isMatched && !card.isFaceUp)
+    }
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))], content: {
-            ForEach(0..<emojisCount, id: \.self){i in
-                CardView(emojy: emojis[i])
+            ForEach(viewModel.cards) {card in
+                CardView(isFaceUp: card.isFaceUp, emojy: card.content)
+                    .onTapGesture {
+                        viewModel.chooseCard(card)
+                    }
                     .aspectRatio(2/3, contentMode: .fit)
+                    .foregroundColor(needToWhitePlace(card) ? .white : .orange)
+                    .animation(.easeInOut, value: card)
+                    .animation(.easeInOut, value: viewModel.cards)
+                    .opacity(needToWhitePlace(card) ? 0 : 1)
             }
         })
-        .foregroundColor(.orange)
-        .padding()
+        
+        .padding() 
         Spacer()
         cardAdjusters
     }
@@ -27,7 +36,12 @@ struct ContentView: View {
     var cardAdjusters: some View {
         HStack {
             buttonView(type: .add)
-            Spacer()
+            Button {
+                viewModel.shuffle()
+            } label: {
+                Text("shuffle")
+            }
+
             buttonView(type: .remove)
         }
         .imageScale(.large)
@@ -37,30 +51,35 @@ struct ContentView: View {
     
     func buttonView(type: EmojiAddType) -> some View {
         Button(action: {
-            type.adjustNumbers(&emojisCount)
+            viewModel.changeNumberOfPairs(type.offset)
         }, label: {
             Image(systemName: type.iconName)
-        }).disabled(type.isDisabled(currentEmojisCount: emojisCount, emojisCount: emojis.count))
+        }).disabled(viewModel.isDisabled(type: type))
     }
 }
 
 struct CardView: View {
-    @State var isFaceUp: Bool
+    private var isFaceUp: Bool
     private let emojy: String
-    init(isFaceUp: Bool = true, emojy: String) {
+    init(isFaceUp: Bool, emojy: String) {
         self.isFaceUp = isFaceUp
         self.emojy = emojy
     }
+    
     var body: some View {
         ZStack{
             let rectangle =  RoundedRectangle(cornerRadius: 10)
+            Group {
+                rectangle.fill(.white)
                 rectangle.stroke(lineWidth: 3)
                 Text(emojy)
+                    .font(.system(size: 100))
+                    .minimumScaleFactor(0.01)
+                    .aspectRatio(contentMode: .fit)
+            }
+            .opacity(isFaceUp ? 1 : 0)
             rectangle.fill().opacity(isFaceUp ? 0 : 1)
-        }
-        .onTapGesture {
-            isFaceUp.toggle()
-        }
+        }.font(.title)
         
     }
 }
@@ -84,21 +103,12 @@ extension EmojiAddType {
         }
     }
     
-    func adjustNumbers(_ count: inout Int) {
+    var offset: Int {
         switch self {
         case .add:
-            count += 1
+             1
         case .remove:
-            count -= 1
-        }
-    }
-    
-    func isDisabled(currentEmojisCount: Int, emojisCount: Int) -> Bool {
-        switch self {
-        case .add:
-            currentEmojisCount >= emojisCount
-        case .remove:
-            emojisCount <= 0
+            -1
         }
     }
 }
