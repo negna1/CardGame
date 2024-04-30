@@ -8,47 +8,31 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var emojisCount = 10
-    var emojis = ["🐨" , "🦁", "🙊", "🦋", "🇬🇪", "🐯", "🪀", "🍎", "🥬", "🖥️", "📸", "👀", "👩🏻‍🦳", "🙈"]
+    @ObservedObject var viewModel = EmojyGameViewModel()
     
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 80))],spacing: 0, content: {
-            ForEach(0..<emojisCount, id: \.self){i in
-                CardView(emojy: emojis[i])
+            
+            ForEach(viewModel.cards) { card in
+                CardView(isFaceUp: card.isFaceUp, emojy: card.content)
                     .aspectRatio(2/3, contentMode: .fit)
                     .padding(3)
+                    .opacity((card.isMatched && !card.isFaceUp) ? 0 : 1)
+                    .onTapGesture {
+                        viewModel.chooseCard(card: card)
+                    }
             }
         })
         .foregroundColor(.orange)
         .padding(3)
         Spacer()
-        cardAdjusters
-    }
-    
-    var cardAdjusters: some View {
-        HStack {
-            buttonView(type: .add)
-            Spacer()
-            buttonView(type: .remove)
-        }
-        .imageScale(.large)
-        .foregroundColor(.yellow)
-        .padding()
-    }
-    
-    func buttonView(type: EmojiAddType) -> some View {
-        Button(action: {
-            type.adjustNumbers(&emojisCount)
-        }, label: {
-            Image(systemName: type.iconName)
-        }).disabled(type.isDisabled(currentEmojisCount: emojisCount, emojisCount: emojis.count))
     }
 }
 
 struct CardView: View {
-    @State var isFaceUp: Bool
+    var isFaceUp: Bool
     private let emojy: String
-    init(isFaceUp: Bool = true, emojy: String) {
+    init(isFaceUp: Bool, emojy: String) {
         self.isFaceUp = isFaceUp
         self.emojy = emojy
     }
@@ -62,47 +46,9 @@ struct CardView: View {
                 .scaledToFit()
             rectangle.fill().opacity(isFaceUp ? 0 : 1)
         }
-        .onTapGesture {
-            isFaceUp.toggle()
-        }
-        
     }
 }
 
 #Preview {
     ContentView()
-}
-
-enum EmojiAddType {
-    case add
-    case remove
-}
-
-extension EmojiAddType {
-    var iconName: String {
-        switch self {
-        case .add:
-            "plus.circle.fill"
-        case .remove:
-            "minus.circle.fill"
-        }
-    }
-    
-    func adjustNumbers(_ count: inout Int) {
-        switch self {
-        case .add:
-            count += 1
-        case .remove:
-            count -= 1
-        }
-    }
-    
-    func isDisabled(currentEmojisCount: Int, emojisCount: Int) -> Bool {
-        switch self {
-        case .add:
-            currentEmojisCount >= emojisCount
-        case .remove:
-            emojisCount <= 0
-        }
-    }
 }
