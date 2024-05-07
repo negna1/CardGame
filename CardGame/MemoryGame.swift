@@ -39,8 +39,11 @@ struct MemoryGame<CardContent: Equatable> {
     }
     
     mutating func chooseCard(card: Card) {
-        guard let (offset, _) = cards.enumerated().filter({$0.element == card}).first else { return }
+        if oldChoosenCardIndex == nil {
+            cards.enumerated().forEach({cards[$0.offset].isFaceUp = false})
+        }
         
+        guard let (offset, _) = cards.enumerated().filter({$0.element == card}).first else { return }
         if oldChoosenCardIndex == offset {
             cards[offset].isFaceUp.toggle()
             oldChoosenCardIndex = nil
